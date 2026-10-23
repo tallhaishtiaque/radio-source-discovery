@@ -63,3 +63,30 @@ def random_baseline(labels, rare_label):
     """Expected precision@k under uniformly random retrieval: just the
     rare class's share of the full population."""
     return float((labels == rare_label).sum()) / len(labels)
+
+
+def random_hit_rate(n_total, n_rare, k=20):
+    """Expected hit-rate@k under uniformly random retrieval.
+
+    Hit-rate (at least one rare example in the top k) is only interpretable
+    next to this number. When the rare class is common (e.g. ~25% of the
+    data) random retrieval already scores ~1.0, so a high hit-rate says
+    nothing about the method. The query itself is excluded from the pool.
+    """
+    from math import comb
+
+    pool = n_total - 1
+    positives = n_rare - 1
+    negatives = pool - positives
+    if negatives < k:
+        return 1.0
+    return 1.0 - comb(negatives, k) / comb(pool, k)
+
+
+def normalised_gain(precision, baseline):
+    """Prevalence-adjusted score: 0 = no better than random, 1 = perfect.
+
+    Raw lift (precision / baseline) flatters rarer classes, so compare
+    datasets with different rare-class shares using this instead.
+    """
+    return (precision - baseline) / (1.0 - baseline)
